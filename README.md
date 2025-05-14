@@ -6,9 +6,28 @@
 
 ChessMetrics Pro è un software professionale per l'analisi avanzata delle partite di scacchi. Progettato per giocatori di tutti i livelli, dal principiante all'esperto, permette di analizzare un database di partite per ottenere insights strategici sulla propria performance.
 
+[![Status](https://img.shields.io/badge/status-alpha-red)](https://github.com/blackeyes972/chessmetrics-pro)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![SQLite](https://img.shields.io/badge/database-SQLite-green.svg)](https://www.sqlite.org/)
 [![License](https://img.shields.io/badge/license-GPL%20v3-orange.svg)](LICENSE)
+
+---
+
+## Stato del Progetto
+
+## Versione Attuale
+**0.1.0-alpha**
+
+⚠️ **NOTA: ChessMetrics Pro è attualmente in fase ALPHA** ⚠️
+
+Questo significa che:
+- Le funzionalità principali sono implementate ma potrebbero contenere bug
+- L'interfaccia utente potrebbe subire modifiche significative
+- La documentazione è ancora in sviluppo
+- Non consigliamo l'uso in ambienti di produzione critici
+
+Siamo alla ricerca di feedback e segnalazioni per migliorare il software. Se riscontri problemi, 
+per favore apri una issue sul repository GitHub.
 
 ---
 
@@ -40,7 +59,7 @@ ChessMetrics Pro offre un'analisi completa delle partite di scacchi attraverso v
 
 ```bash
 # Clona il repository
-git clone https://github.com/username/chessmetrics-pro.git
+git clone https://github.com/blackeyes972/chessmetrics-pro.git
 cd chessmetrics-pro
 
 # Crea un ambiente virtuale (consigliato)
@@ -256,7 +275,7 @@ Questo progetto è rilasciato sotto la licenza MIT. Vedi il file [LICENSE](LICEN
 
 ## 👥 Autori
 
-- **Alessandro Marone** - *Sviluppo iniziale*
+- **Alessandro Castaldi** - *Sviluppo iniziale*
 
 ## 🙏 Ringraziamenti
 
@@ -269,8 +288,8 @@ Questo progetto è rilasciato sotto la licenza MIT. Vedi il file [LICENSE](LICEN
 ## 📬 Contatti
 
 Per domande, suggerimenti o segnalazioni di bug, contattare:
-- Email: alessandro.marone@example.com
-- GitHub: [github.com/alessandro-marone](https://github.com/alessandro-marone)
+- Email: notifiche72@gmail.com
+- GitHub: [github.com/blackeyes972](https://github.com/blackeyes972)
 
 ---
 

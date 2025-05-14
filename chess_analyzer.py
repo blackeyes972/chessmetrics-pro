@@ -1665,6 +1665,9 @@ class ChessAnalyzer:
 
 def main() -> None:
     """Funzione principale dello script."""
+    print("\033[1;33mChessMetrics Pro v0.1.0-alpha\033[0m")
+    print("\033[1;33mATTENZIONE: Questo software è in fase alpha. Utilizzare a proprio rischio.\033[0m\n")
+    
     parser = argparse.ArgumentParser(description='Analisi avanzata di partite di scacchi da database SQLite')
     parser.add_argument('--db-path', default='chess_games.db', help='Percorso del database SQLite')
     parser.add_argument('--player', default='Blackeyes972', help='Nome del giocatore da analizzare')
