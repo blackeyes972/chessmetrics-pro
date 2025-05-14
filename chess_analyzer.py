@@ -1228,65 +1228,440 @@ class ChessAnalyzer:
         except Exception as e:
             print(f"Errore durante l'esportazione: {e}")
 
-    def export_analysis_to_text(self, filename: str = 'chess_analysis.txt') -> None:
-        """Exports all analysis results to a formatted text file.
+    def export_analysis_to_text(self, filename: str = 'analisi_scacchi.txt') -> None:
+        """Esporta tutti i risultati delle analisi in un file di testo formattato.
         
-        This function captures the same nicely formatted output that appears
-        in the terminal and saves it to a text file for later reference.
+        Questa funzione genera un rapporto di testo formattato con tutte le analisi,
+        ottimizzato per essere visualizzato correttamente in qualsiasi editor di testo.
         
         Args:
-            filename: Name of the output text file
+            filename: Nome del file di testo di output
         """
         try:
-            # We'll use a context manager to redirect stdout temporarily
-            import io
-            import sys
-            from contextlib import redirect_stdout
+            # Impostiamo un formato tabella ottimizzato per il testo
+            formato_tabella = 'grid'  # Alternative: 'simple', 'plain', 'github'
             
-            # Create a buffer to capture all output
-            buffer = io.StringIO()
+            # Creiamo un buffer di testo per costruire l'output
+            output_testo = []
             
-            # Inform the user what's happening
-            print(f"\nExporting all analysis to '{filename}'...")
+            # Aggiungiamo un'intestazione
+            output_testo.append(f"RAPPORTO DI ANALISI SCACCHISTICA PER: {self.player_name}")
+            output_testo.append("=" * 50)
+            output_testo.append(f"Generato il: {datetime.now().strftime('%d-%m-%Y %H:%M:%S')}")
+            output_testo.append("=" * 50)
+            output_testo.append("\n")
             
-            # Redirect standard output to our buffer and run all analyses
-            with redirect_stdout(buffer):
-                print(f"\nCHESS ANALYSIS REPORT FOR: {self.player_name}")
-                print("=" * 50)
-                print(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-                print("=" * 50)
+            # Funzione per formattare un dataframe come tabella di testo
+            def formatta_dataframe(df, titolo):
+                risultato = []
+                risultato.append(f"\n{titolo}")
+                risultato.append("-" * len(titolo))
+                if df.empty:
+                    risultato.append("Nessun dato disponibile.")
+                else:
+                    # Utilizziamo tabulate con un formato adatto ai file di testo
+                    risultato.append(tabulate(df, headers='keys', tablefmt=formato_tabella, showindex=False))
+                return "\n".join(risultato)
+            
+            # ----- STATISTICHE DI BASE -----
+            output_testo.append("STATISTICHE DI BASE")
+            output_testo.append("=" * 30)
+            
+            stats = self.get_basic_stats()
+            testo_stats_base = [
+                f"Partite totali: {stats['total_games']}",
+                f"Partite con il Bianco: {stats['white_games']} ({round(stats['white_games']/stats['total_games']*100 if stats['total_games'] > 0 else 0, 1)}%)",
+                f"Partite con il Nero: {stats['black_games']} ({round(stats['black_games']/stats['total_games']*100 if stats['total_games'] > 0 else 0, 1)}%)",
+                f"Vittorie: {stats['wins']} ({stats['win_percentage']}%)",
+                f"Sconfitte: {stats['losses']} ({stats['loss_percentage']}%)",
+                f"Pareggi: {stats['draws']} ({stats['draw_percentage']}%)",
+                f"Lunghezza media partite: {stats['avg_game_length']} mosse",
+                f"Elo medio del giocatore: {stats['avg_player_elo']}",
+                f"Elo medio degli avversari: {stats['avg_opponent_elo']}"
+            ]
+            output_testo.append("\n".join(testo_stats_base))
+            
+            # ----- ANALISI DELLE APERTURE -----
+            output_testo.append("\n\nANALISI DELLE APERTURE")
+            output_testo.append("=" * 30)
+            
+            # Aperture più giocate
+            query_most_played = """
+                SELECT eco, opening, COUNT(*) as games, 
+                    SUM(CASE WHEN 
+                            (white_player = ? AND result = '1-0') OR
+                            (black_player = ? AND result = '0-1')
+                        THEN 1 ELSE 0 END) as wins,
+                    SUM(CASE WHEN result = '1/2-1/2' THEN 1 ELSE 0 END) as draws,
+                    SUM(CASE WHEN 
+                            (white_player = ? AND result = '0-1') OR
+                            (black_player = ? AND result = '1-0')
+                        THEN 1 ELSE 0 END) as losses,
+                    ROUND(SUM(CASE WHEN 
+                            (white_player = ? AND result = '1-0') OR
+                            (black_player = ? AND result = '0-1')
+                        THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as win_percentage
+                FROM games
+                WHERE (white_player = ? OR black_player = ?) AND eco IS NOT NULL AND eco != ''
+                GROUP BY eco, opening
+                HAVING COUNT(*) >= 2
+                ORDER BY games DESC
+                LIMIT 20
+            """
+            df_most_played = pd.read_sql_query(query_most_played, self.conn, params=[self.player_name] * 8)
+            df_most_played.columns = ['ECO', 'Apertura', 'Partite', 'Vittorie', 'Pareggi', 'Sconfitte', 'Percentuale_Vittorie']
+            output_testo.append(formatta_dataframe(df_most_played, "APERTURE PIÙ GIOCATE"))
+            
+            # Migliori aperture (per tasso di vittoria)
+            query_best = """
+                SELECT eco, opening, COUNT(*) as games, 
+                    SUM(CASE WHEN 
+                            (white_player = ? AND result = '1-0') OR
+                            (black_player = ? AND result = '0-1')
+                        THEN 1 ELSE 0 END) as wins,
+                    SUM(CASE WHEN result = '1/2-1/2' THEN 1 ELSE 0 END) as draws,
+                    SUM(CASE WHEN 
+                            (white_player = ? AND result = '0-1') OR
+                            (black_player = ? AND result = '1-0')
+                        THEN 1 ELSE 0 END) as losses,
+                    ROUND(SUM(CASE WHEN 
+                            (white_player = ? AND result = '1-0') OR
+                            (black_player = ? AND result = '0-1')
+                        THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as win_percentage
+                FROM games
+                WHERE (white_player = ? OR black_player = ?) AND eco IS NOT NULL AND eco != ''
+                GROUP BY eco, opening
+                HAVING COUNT(*) >= 2
+                ORDER BY win_percentage DESC, games DESC
+                LIMIT 10
+            """
+            df_best = pd.read_sql_query(query_best, self.conn, params=[self.player_name] * 8)
+            df_best.columns = ['ECO', 'Apertura', 'Partite', 'Vittorie', 'Pareggi', 'Sconfitte', 'Percentuale_Vittorie']
+            output_testo.append(formatta_dataframe(df_best, "MIGLIORI APERTURE (PER TASSO DI VITTORIA)"))
+            
+            # Peggiori aperture (per tasso di vittoria)
+            query_worst = """
+                SELECT eco, opening, COUNT(*) as games, 
+                    SUM(CASE WHEN 
+                            (white_player = ? AND result = '1-0') OR
+                            (black_player = ? AND result = '0-1')
+                        THEN 1 ELSE 0 END) as wins,
+                    SUM(CASE WHEN result = '1/2-1/2' THEN 1 ELSE 0 END) as draws,
+                    SUM(CASE WHEN 
+                            (white_player = ? AND result = '0-1') OR
+                            (black_player = ? AND result = '1-0')
+                        THEN 1 ELSE 0 END) as losses,
+                    ROUND(SUM(CASE WHEN 
+                            (white_player = ? AND result = '1-0') OR
+                            (black_player = ? AND result = '0-1')
+                        THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as win_percentage
+                FROM games
+                WHERE (white_player = ? OR black_player = ?) AND eco IS NOT NULL AND eco != ''
+                GROUP BY eco, opening
+                HAVING COUNT(*) >= 2
+                ORDER BY win_percentage ASC, games DESC
+                LIMIT 10
+            """
+            df_worst = pd.read_sql_query(query_worst, self.conn, params=[self.player_name] * 8)
+            df_worst.columns = ['ECO', 'Apertura', 'Partite', 'Vittorie', 'Pareggi', 'Sconfitte', 'Percentuale_Vittorie']
+            output_testo.append(formatta_dataframe(df_worst, "PEGGIORI APERTURE (PER TASSO DI VITTORIA)"))
+            
+            # Aperture con il bianco
+            query_white = """
+                SELECT eco, opening, COUNT(*) as games, 
+                    SUM(CASE WHEN result = '1-0' THEN 1 ELSE 0 END) as wins,
+                    SUM(CASE WHEN result = '1/2-1/2' THEN 1 ELSE 0 END) as draws,
+                    SUM(CASE WHEN result = '0-1' THEN 1 ELSE 0 END) as losses,
+                    ROUND(SUM(CASE WHEN result = '1-0' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as win_percentage
+                FROM games
+                WHERE white_player = ? AND eco IS NOT NULL AND eco != ''
+                GROUP BY eco, opening
+                HAVING COUNT(*) >= 2
+                ORDER BY win_percentage DESC, games DESC
+                LIMIT 10
+            """
+            df_white = pd.read_sql_query(query_white, self.conn, params=[self.player_name])
+            df_white.columns = ['ECO', 'Apertura', 'Partite', 'Vittorie', 'Pareggi', 'Sconfitte', 'Percentuale_Vittorie']
+            output_testo.append(formatta_dataframe(df_white, "MIGLIORI APERTURE CON IL BIANCO"))
+            
+            # Aperture con il nero
+            query_black = """
+                SELECT eco, opening, COUNT(*) as games, 
+                    SUM(CASE WHEN result = '0-1' THEN 1 ELSE 0 END) as wins,
+                    SUM(CASE WHEN result = '1/2-1/2' THEN 1 ELSE 0 END) as draws,
+                    SUM(CASE WHEN result = '1-0' THEN 1 ELSE 0 END) as losses,
+                    ROUND(SUM(CASE WHEN result = '0-1' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as win_percentage
+                FROM games
+                WHERE black_player = ? AND eco IS NOT NULL AND eco != ''
+                GROUP BY eco, opening
+                HAVING COUNT(*) >= 2
+                ORDER BY win_percentage DESC, games DESC
+                LIMIT 10
+            """
+            df_black = pd.read_sql_query(query_black, self.conn, params=[self.player_name])
+            df_black.columns = ['ECO', 'Apertura', 'Partite', 'Vittorie', 'Pareggi', 'Sconfitte', 'Percentuale_Vittorie']
+            output_testo.append(formatta_dataframe(df_black, "MIGLIORI APERTURE CON IL NERO"))
+            
+            # ----- ANALISI DEGLI AVVERSARI -----
+            output_testo.append("\n\nANALISI DEGLI AVVERSARI")
+            output_testo.append("=" * 30)
+            
+            query_opponents = """
+                SELECT opponent, COUNT(*) as games_played,
+                    SUM(CASE WHEN 
+                            (white_player = ? AND result = '1-0') OR
+                            (black_player = ? AND result = '0-1')
+                        THEN 1 ELSE 0 END) as wins,
+                    SUM(CASE WHEN result = '1/2-1/2' THEN 1 ELSE 0 END) as draws,
+                    SUM(CASE WHEN 
+                            (white_player = ? AND result = '0-1') OR
+                            (black_player = ? AND result = '1-0')
+                        THEN 1 ELSE 0 END) as losses,
+                    ROUND(SUM(CASE WHEN 
+                            (white_player = ? AND result = '1-0') OR
+                            (black_player = ? AND result = '0-1')
+                        THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as win_percent,
+                    ROUND(AVG(CASE WHEN white_player = ? THEN black_elo ELSE white_elo END)) as avg_opponent_elo
+                FROM (
+                    SELECT white_player, black_player, result, white_elo, black_elo,
+                        CASE WHEN white_player = ? THEN black_player ELSE white_player END as opponent
+                    FROM games
+                    WHERE white_player = ? OR black_player = ?
+                ) as opponents
+                GROUP BY opponent
+                ORDER BY games_played DESC
+                LIMIT 15
+            """
+            df_opponents = pd.read_sql_query(query_opponents, self.conn, params=[self.player_name] * 10)
+            df_opponents.columns = ['Avversario', 'Partite_Giocate', 'Vittorie', 'Pareggi', 'Sconfitte', 'Percentuale_Vittorie', 'Elo_Medio_Avversario']
+            output_testo.append(formatta_dataframe(df_opponents, "PERFORMANCE CONTRO GLI AVVERSARI"))
+            
+            # ----- ANALISI DELLE FASI DI GIOCO -----
+            output_testo.append("\n\nANALISI DELLE FASI DI GIOCO")
+            output_testo.append("=" * 30)
+            
+            query_phases = """
+                SELECT 
+                    CASE 
+                        WHEN moves_count <= 10 THEN 'Apertura (≤10)'
+                        WHEN moves_count <= 25 THEN 'Mediogioco (11-25)'
+                        WHEN moves_count <= 40 THEN 'Tardo mediogioco (26-40)'
+                        ELSE 'Finale (>40)'
+                    END as fase_partita,
+                    COUNT(*) as num_partite,
+                    SUM(CASE WHEN 
+                        (white_player = ? AND result = '1-0') OR
+                        (black_player = ? AND result = '0-1')
+                        THEN 1 ELSE 0 END) as vittorie,
+                    SUM(CASE WHEN result = '1/2-1/2' THEN 1 ELSE 0 END) as pareggi,
+                    SUM(CASE WHEN 
+                        (white_player = ? AND result = '0-1') OR
+                        (black_player = ? AND result = '1-0')
+                        THEN 1 ELSE 0 END) as sconfitte,
+                    ROUND(SUM(CASE WHEN 
+                        (white_player = ? AND result = '1-0') OR
+                        (black_player = ? AND result = '0-1')
+                        THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as perc_vittorie
+                FROM (
+                    SELECT g.id, g.white_player, g.black_player, g.result, 
+                        CAST(MAX(m.ply_number)/2 + 0.5 AS INTEGER) as moves_count
+                    FROM games g
+                    JOIN moves m ON g.id = m.game_id
+                    WHERE g.white_player = ? OR g.black_player = ?
+                    GROUP BY g.id
+                ) as game_lengths
+                GROUP BY fase_partita
+                ORDER BY MIN(moves_count)
+            """
+            df_phases = pd.read_sql_query(query_phases, self.conn, params=[self.player_name] * 8)
+            df_phases.columns = ['Fase_Partita', 'Partite', 'Vittorie', 'Pareggi', 'Sconfitte', 'Percentuale_Vittorie']
+            
+            # Ordine corretto delle fasi
+            correct_order = ['Apertura (≤10)', 'Mediogioco (11-25)', 'Tardo mediogioco (26-40)', 'Finale (>40)']
+            df_phases['Fase_Partita'] = pd.Categorical(df_phases['Fase_Partita'], categories=correct_order, ordered=True)
+            df_phases = df_phases.sort_values('Fase_Partita')
+            
+            output_testo.append(formatta_dataframe(df_phases, "PERFORMANCE PER FASE DI GIOCO"))
+            
+            # ----- ANALISI DELL'ELO -----
+            output_testo.append("\n\nANALISI DELL'ELO")
+            output_testo.append("=" * 30)
+            
+            query_elo = """
+                SELECT date, 
+                    CASE WHEN white_player = ? THEN white_elo ELSE black_elo END as elo,
+                    CASE 
+                        WHEN (white_player = ? AND result = '1-0') OR (black_player = ? AND result = '0-1') THEN 'win'
+                        WHEN (white_player = ? AND result = '0-1') OR (black_player = ? AND result = '1-0') THEN 'loss'
+                        ELSE 'draw'
+                    END as result
+                FROM games
+                WHERE (white_player = ? OR black_player = ?) 
+                AND (white_elo > 0 AND black_elo > 0)
+                ORDER BY date
+            """
+            
+            df_elo = pd.read_sql_query(query_elo, self.conn, params=[self.player_name] * 7)
+            
+            if not df_elo.empty:
+                # Convertiamo la data in formato datetime
+                df_elo['date'] = pd.to_datetime(df_elo['date'], errors='coerce')
+                df_elo = df_elo.dropna(subset=['date'])  # Rimuoviamo le date non valide
                 
-                # Run all the analysis methods
-                print("\n\n" + "=" * 20 + " BASIC STATISTICS " + "=" * 20)
-                self.display_basic_stats()
+                # Aggiungiamo una colonna per il mese/anno
+                df_elo['month_year'] = df_elo['date'].dt.strftime('%Y-%m')
                 
-                print("\n\n" + "=" * 20 + " OPENING ANALYSIS " + "=" * 20)
-                self.analyze_openings()
+                # Calcolo statistiche mensili
+                monthly_stats = df_elo.groupby('month_year').agg({
+                    'elo': ['mean', 'min', 'max', 'count'],
+                    'result': lambda x: (x == 'win').sum() / len(x) * 100  # win percentage
+                })
                 
-                print("\n\n" + "=" * 20 + " OPPONENT ANALYSIS " + "=" * 20)
-                self.analyze_opponents()
+                monthly_stats.columns = ['Elo_Medio', 'Elo_Minimo', 'Elo_Massimo', 'Partite', 'Percentuale_Vittorie']
+                monthly_stats = monthly_stats.reset_index()
+                monthly_stats.rename(columns={'month_year': 'Mese_Anno'}, inplace=True)
                 
-                print("\n\n" + "=" * 20 + " GAME PHASE ANALYSIS " + "=" * 20)
-                self.analyze_game_phases()
+                output_testo.append("\nSTATISTICHE GENERALI DELL'ELO")
+                output_testo.append("-" * 30)
+                output_testo.append(f"Elo iniziale: {df_elo['elo'].iloc[0]}")
+                output_testo.append(f"Elo finale: {df_elo['elo'].iloc[-1]}")
+                output_testo.append(f"Variazione: {df_elo['elo'].iloc[-1] - df_elo['elo'].iloc[0]}")
+                output_testo.append(f"Elo minimo: {df_elo['elo'].min()}")
+                output_testo.append(f"Elo massimo: {df_elo['elo'].max()}")
+                output_testo.append(f"Media: {df_elo['elo'].mean():.1f}")
                 
-                print("\n\n" + "=" * 20 + " ELO PROGRESSION " + "=" * 20)
-                self.analyze_elo_progression()
+                output_testo.append(formatta_dataframe(monthly_stats, "\nELO MENSILE"))
+            else:
+                output_testo.append("\nNessun dato Elo disponibile.")
+            
+            # ----- ANALISI DEGLI ERRORI FREQUENTI -----
+            output_testo.append("\n\nANALISI DELLE SCONFITTE RAPIDE")
+            output_testo.append("=" * 30)
+            
+            query_losses = """
+                SELECT g.white_player, g.black_player, g.result, g.eco, g.opening,
+                    MAX(m.ply_number)/2 + 0.5 as moves_count
+                FROM games g
+                JOIN moves m ON g.id = m.game_id
+                WHERE (g.white_player = ? OR g.black_player = ?) AND 
+                    ((g.white_player = ? AND g.result = '0-1') OR 
+                    (g.black_player = ? AND g.result = '1-0'))
+                GROUP BY g.id
+                HAVING moves_count <= 25
+                ORDER BY moves_count ASC
+                LIMIT 15
+            """
+            
+            df_losses = pd.read_sql_query(query_losses, self.conn, params=[self.player_name] * 4)
+            
+            if not df_losses.empty:
+                # Aggiungiamo una colonna per il colore
+                df_losses['color'] = ['Bianco' if p == self.player_name else 'Nero' for p in df_losses['white_player']]
                 
-                print("\n\n" + "=" * 20 + " MISTAKE ANALYSIS " + "=" * 20)
-                self.analyze_frequent_mistakes()
+                # Aggiungiamo una colonna per l'avversario
+                df_losses['opponent'] = [black if white == self.player_name else white 
+                                for white, black in zip(df_losses['white_player'], df_losses['black_player'])]
                 
-                print("\n\n" + "=" * 20 + " ECO CATEGORY ANALYSIS " + "=" * 20)
-                self.analyze_performance_by_eco()
+                # Selezioniamo solo le colonne rilevanti
+                df_display = df_losses[['color', 'opponent', 'eco', 'opening', 'moves_count']]
+                df_display.columns = ['Colore', 'Avversario', 'ECO', 'Apertura', 'Mosse']
                 
-            # Write the captured output to a file
+                output_testo.append("\nPARTITE PERSE RAPIDAMENTE (<= 25 mosse)")
+                output_testo.append("-" * 50)
+                output_testo.append(tabulate(df_display, headers='keys', tablefmt=formato_tabella, showindex=False))
+                
+                # Analisi per apertura
+                output_testo.append("\nAPERTURE PROBLEMATICHE (SCONFITTE RAPIDE)")
+                output_testo.append("-" * 50)
+                
+                eco_counts = df_losses['eco'].value_counts().reset_index()
+                eco_counts.columns = ['ECO', 'Frequenza']
+                
+                # Aggiungiamo il nome dell'apertura
+                eco_names = {}
+                for eco, opening in zip(df_losses['eco'], df_losses['opening']):
+                    if eco not in eco_names and not pd.isna(eco):
+                        eco_names[eco] = opening
+                
+                eco_counts['Apertura'] = eco_counts['ECO'].map(lambda x: eco_names.get(x, 'Sconosciuta'))
+                
+                if not eco_counts.empty:
+                    output_testo.append(tabulate(eco_counts.head(10), headers='keys', tablefmt=formato_tabella, showindex=False))
+                else:
+                    output_testo.append("Nessun dato disponibile.")
+            else:
+                output_testo.append("Nessuna sconfitta rapida trovata.")
+            
+            # ----- ANALISI PER CATEGORIA ECO -----
+            output_testo.append("\n\nANALISI PER CATEGORIA ECO")
+            output_testo.append("=" * 30)
+            
+            query_eco = """
+                SELECT SUBSTR(eco, 1, 1) as eco_category,
+                    COUNT(*) as games,
+                    SUM(CASE WHEN 
+                            (white_player = ? AND result = '1-0') OR
+                            (black_player = ? AND result = '0-1')
+                        THEN 1 ELSE 0 END) as wins,
+                    SUM(CASE WHEN result = '1/2-1/2' THEN 1 ELSE 0 END) as draws,
+                    SUM(CASE WHEN 
+                            (white_player = ? AND result = '0-1') OR
+                            (black_player = ? AND result = '1-0')
+                        THEN 1 ELSE 0 END) as losses,
+                    ROUND(SUM(CASE WHEN 
+                            (white_player = ? AND result = '1-0') OR
+                            (black_player = ? AND result = '0-1')
+                        THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as win_percentage
+                FROM games
+                WHERE (white_player = ? OR black_player = ?) AND eco IS NOT NULL AND eco != ''
+                GROUP BY eco_category
+                ORDER BY eco_category
+            """
+            
+            df_eco = pd.read_sql_query(query_eco, self.conn, params=[self.player_name] * 8)
+            
+            if not df_eco.empty:
+                # Aggiungiamo una descrizione per ogni categoria ECO
+                eco_descriptions = {
+                    'A': 'Aperture di Fianchetto (1.c4, 1.Nf3, etc.)',
+                    'B': 'Aperture Semiaperte (1.e4 eccetto 1...e5)',
+                    'C': 'Aperture Aperte (1.e4 e5)',
+                    'D': 'Aperture Chiuse (1.d4 d5)',
+                    'E': 'Difese Indiane (1.d4 Nf6 eccetto 2.c4 e5)'
+                }
+                
+                df_eco['descrizione'] = df_eco['eco_category'].map(lambda x: eco_descriptions.get(x, 'Sconosciuta'))
+                df_eco.columns = ['Categoria_ECO', 'Partite', 'Vittorie', 'Pareggi', 'Sconfitte', 'Percentuale_Vittorie', 'Descrizione']
+                
+                output_testo.append(formatta_dataframe(df_eco, "PERFORMANCE PER CATEGORIA ECO"))
+                
+                # Spiegazione delle categorie ECO
+                output_testo.append("\nSPIEGAZIONE DELLE CATEGORIE ECO:")
+                output_testo.append("-" * 30)
+                output_testo.append("L'ECO (Encyclopedia of Chess Openings) è un sistema di classificazione standardizzato")
+                output_testo.append("per le aperture di scacchi. Le categorie principali sono:")
+                output_testo.append("A - Aperture di Fianchetto: Aperture che iniziano con 1.c4, 1.Nf3, etc.")
+                output_testo.append("B - Aperture Semiaperte: Iniziano con 1.e4, ma la risposta nera non è 1...e5")
+                output_testo.append("C - Aperture Aperte: Iniziano con 1.e4 e5")
+                output_testo.append("D - Aperture Chiuse: Principalmente quelle che iniziano con 1.d4 d5")
+                output_testo.append("E - Difese Indiane: Principalmente quelle che iniziano con 1.d4 Nf6")
+            else:
+                output_testo.append("Nessun dato ECO disponibile.")
+            
+            # ----- CONCLUSIONE -----
+            output_testo.append("\n\nANALISI COMPLETATA")
+            output_testo.append("=" * 30)
+            output_testo.append("Questo rapporto è stato generato automaticamente dal ChessAnalyzer.")
+            output_testo.append(f"Utilizza queste informazioni per migliorare il tuo gioco!")
+            
+            # Scriviamo l'output completo nel file di testo
             with open(filename, 'w', encoding='utf-8') as f:
-                f.write(buffer.getvalue())
+                f.write("\n".join(output_testo))
                 
-            print(f"Analysis successfully exported to '{filename}'")
+            print(f"Analisi esportata con successo in '{filename}'")
             
         except Exception as e:
-            print(f"Error during text export: {e}")
-
+            print(f"Errore durante l'esportazione in testo: {e}")
 
 def main() -> None:
     """Funzione principale dello script."""
