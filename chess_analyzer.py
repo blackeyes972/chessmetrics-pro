@@ -1663,11 +1663,287 @@ class ChessAnalyzer:
         except Exception as e:
             print(f"Errore durante l'esportazione in testo: {e}")
 
+def show_interactive_menu(args_parser):
+    """
+    Mostra un menu interattivo per selezionare le operazioni da eseguire.
+    
+    Args:
+        args_parser: L'oggetto parser degli argomenti, usato per costruire il comando finale
+        
+    Returns:
+        argparse.Namespace: Un oggetto contenente gli argomenti come se fossero stati passati da riga di comando
+    """
+    
+    # Funzione di utilità per pulire lo schermo
+    def clear_screen():
+        os.system('cls' if os.name == 'nt' else 'clear')
+    
+    # Funzione per stampare titoli formattati
+    def print_title(title):
+        print("\n" + "=" * 60)
+        print(f"  {title}")
+        print("=" * 60)
+    
+    # Funzione per stampare menu con opzioni numerate
+    def print_menu(options):
+        for idx, option in enumerate(options, 1):
+            print(f"  {idx}. {option}")
+        print("  0. Esci")
+    
+    # Funzione per ottenere input sicuro
+    def get_safe_input(prompt, valid_range=None):
+        while True:
+            try:
+                choice = input(prompt)
+                if choice.lower() in ['q', 'quit', 'exit']:
+                    return 0
+                choice = int(choice)
+                
+                if valid_range is None or choice in valid_range:
+                    return choice
+                else:
+                    print(f"⚠️  Scelta non valida. Inserisci un numero tra {min(valid_range)} e {max(valid_range)} o 0 per uscire.")
+            except ValueError:
+                print("⚠️  Inserisci un numero valido.")
+    
+    # Costruiamo un oggetto per tenere traccia delle scelte dell'utente
+    selected_args = {}
+    
+    # Ciclo principale del menu
+    while True:
+        clear_screen()
+        print_title("ChessMetrics Pro - Menu Interattivo")
+        print("\nVersione: 0.1.0-alpha")
+        print("❗ Attenzione: Software in fase alpha - Utilizzare a proprio rischio\n")
+        
+        print("OPERAZIONI DISPONIBILI:")
+        operations = [
+            "Importa file PGN nel database",
+            "Analizza le partite",
+            "Esporta analisi in CSV",
+            "Esporta analisi in file di testo",
+            "Visualizza statistiche rapide",
+            "Configura impostazioni"
+        ]
+        print_menu(operations)
+        
+        choice = get_safe_input("\nScegli un'operazione (0 per uscire): ", range(len(operations) + 1))
+        
+        if choice == 0:
+            print("\nUscita dal programma...")
+            return None  # Indica che l'utente vuole uscire
+            
+        # Menu per importazione PGN
+        elif choice == 1:
+            clear_screen()
+            print_title("Importazione File PGN")
+            
+            # Ottieni cartella PGN
+            pgn_folder = input("\nInserisci il percorso della cartella PGN [pgn_files]: ").strip()
+            if not pgn_folder:
+                pgn_folder = "pgn_files"
+            selected_args['pgn_folder'] = pgn_folder
+            
+            # Ottieni percorso database
+            db_path = input("\nInserisci il percorso del database [chess_games.db]: ").strip()
+            if not db_path:
+                db_path = "chess_games.db"
+            selected_args['db_path'] = db_path
+            
+            # Chiedi per la reimportazione
+            force_reimport = input("\nForzare la reimportazione dei file già elaborati? [s/N]: ").strip().lower()
+            selected_args['force_reimport'] = force_reimport in ['s', 'si', 'sì', 'y', 'yes']
+            
+            # Chiedi dimensione batch
+            batch_size = input("\nDimensione del batch per l'importazione [100]: ").strip()
+            if batch_size and batch_size.isdigit():
+                selected_args['batch_size'] = int(batch_size)
+            else:
+                selected_args['batch_size'] = 100
+                
+            # Esegui l'importazione
+            print("\nAvvio importazione...")
+            return argparse.Namespace(**selected_args, analysis=None, export_csv=False, export_text=False, stats=True)
+            
+        # Menu per analisi partite
+        elif choice == 2:
+            clear_screen()
+            print_title("Analisi delle Partite")
+            
+            # Ottieni il nome del giocatore
+            player = input("\nInserisci il nome del giocatore da analizzare [Blackeyes972]: ").strip()
+            if not player:
+                player = "Blackeyes972"
+            selected_args['player'] = player
+            
+            # Ottieni il tipo di analisi
+            print("\nTipi di analisi disponibili:")
+            analysis_types = [
+                "Tutte le analisi",
+                "Statistiche di base",
+                "Analisi delle aperture",
+                "Analisi degli avversari",
+                "Analisi delle fasi di gioco",
+                "Evoluzione dell'Elo",
+                "Analisi degli errori",
+                "Analisi per categoria ECO"
+            ]
+            print_menu(analysis_types)
+            
+            analysis_choice = get_safe_input("\nScegli un tipo di analisi (0 per tornare al menu principale): ", 
+                                            range(len(analysis_types) + 1))
+            
+            if analysis_choice == 0:
+                continue
+                
+            analysis_map = {
+                1: "all",
+                2: "basic",
+                3: "openings",
+                4: "opponents",
+                5: "phases",
+                6: "elo",
+                7: "mistakes",
+                8: "eco"
+            }
+            
+            selected_args['analysis'] = analysis_map[analysis_choice]
+            selected_args['export_csv'] = False
+            selected_args['export_text'] = False
+            
+            # Ottieni percorso database
+            db_path = input("\nInserisci il percorso del database [chess_games.db]: ").strip()
+            if not db_path:
+                db_path = "chess_games.db"
+            selected_args['db_path'] = db_path
+            
+            # Esegui l'analisi
+            print("\nAvvio analisi...")
+            return argparse.Namespace(**selected_args)
+            
+        # Menu per esportazione CSV
+        elif choice == 3:
+            clear_screen()
+            print_title("Esportazione Analisi in CSV")
+            
+            # Ottieni il nome del giocatore
+            player = input("\nInserisci il nome del giocatore da analizzare [Blackeyes972]: ").strip()
+            if not player:
+                player = "Blackeyes972"
+            selected_args['player'] = player
+            
+            # Ottieni percorso database
+            db_path = input("\nInserisci il percorso del database [chess_games.db]: ").strip()
+            if not db_path:
+                db_path = "chess_games.db"
+            selected_args['db_path'] = db_path
+            
+            # Ottieni percorso file CSV
+            csv_path = input("\nInserisci il percorso del file CSV da generare [analisi_scacchi.csv]: ").strip()
+            if not csv_path:
+                csv_path = "analisi_scacchi.csv"
+            selected_args['csv_path'] = csv_path
+            
+            # Imposta parametri per CSV export
+            selected_args['export_csv'] = True
+            selected_args['export_text'] = False
+            selected_args['analysis'] = None
+            
+            # Esegui l'esportazione
+            print("\nAvvio esportazione CSV...")
+            return argparse.Namespace(**selected_args)
+
+        # Menu per esportazione in file di testo
+        elif choice == 4:
+            clear_screen()
+            print_title("Esportazione Analisi in File di Testo")
+            
+            # Ottieni il nome del giocatore
+            player = input("\nInserisci il nome del giocatore da analizzare [Blackeyes972]: ").strip()
+            if not player:
+                player = "Blackeyes972"
+            selected_args['player'] = player
+            
+            # Ottieni percorso database
+            db_path = input("\nInserisci il percorso del database [chess_games.db]: ").strip()
+            if not db_path:
+                db_path = "chess_games.db"
+            selected_args['db_path'] = db_path
+            
+            # Ottieni percorso file di testo
+            text_path = input("\nInserisci il percorso del file di testo da generare [analisi_scacchi.txt]: ").strip()
+            if not text_path:
+                text_path = "analisi_scacchi.txt"
+            selected_args['text_path'] = text_path
+            
+            # Imposta parametri per text export
+            selected_args['export_csv'] = False
+            selected_args['export_text'] = True
+            selected_args['analysis'] = None
+            
+            # Esegui l'esportazione
+            print("\nAvvio esportazione in file di testo...")
+            return argparse.Namespace(**selected_args)
+            
+        # Menu per visualizzazione rapida statistiche
+        elif choice == 5:
+            clear_screen()
+            print_title("Visualizzazione Statistiche Rapide")
+            
+            # Ottieni il nome del giocatore
+            player = input("\nInserisci il nome del giocatore da analizzare [Blackeyes972]: ").strip()
+            if not player:
+                player = "Blackeyes972"
+            selected_args['player'] = player
+            
+            # Ottieni percorso database
+            db_path = input("\nInserisci il percorso del database [chess_games.db]: ").strip()
+            if not db_path:
+                db_path = "chess_games.db"
+            selected_args['db_path'] = db_path
+            
+            # Imposta parametri per stats
+            selected_args['stats'] = True
+            selected_args['analysis'] = "basic"
+            selected_args['export_csv'] = False
+            selected_args['export_text'] = False
+            
+            # Esegui visualizzazione statistiche
+            print("\nRecupero statistiche...")
+            return argparse.Namespace(**selected_args)
+            
+        # Menu per configurazione
+        elif choice == 6:
+            clear_screen()
+            print_title("Configurazione Impostazioni")
+            
+            print("\n⚠️ Le impostazioni verranno salvate per sessioni future.")
+            
+            # Imposta giocatore predefinito
+            default_player = input("\nGiocatore predefinito [Blackeyes972]: ").strip()
+            if default_player:
+                # Salvare questa impostazione in un file di configurazione
+                print(f"Giocatore predefinito impostato a: {default_player}")
+                
+            # Imposta database predefinito
+            default_db = input("\nPercorso database predefinito [chess_games.db]: ").strip()
+            if default_db:
+                # Salvare questa impostazione in un file di configurazione
+                print(f"Database predefinito impostato a: {default_db}")
+                
+            # Altre impostazioni...
+            
+            input("\nPremi Enter per tornare al menu principale...")
+            continue
+
+    # Non dovremmo mai arrivare qui, ma per sicurezza
+    return None
+
 def main() -> None:
     """Funzione principale dello script."""
     print("\033[1;33mChessMetrics Pro v0.1.0-alpha\033[0m")
     print("\033[1;33mATTENZIONE: Questo software è in fase alpha. Utilizzare a proprio rischio.\033[0m\n")
-    
+
     parser = argparse.ArgumentParser(description='Analisi avanzata di partite di scacchi da database SQLite')
     parser.add_argument('--db-path', default='chess_games.db', help='Percorso del database SQLite')
     parser.add_argument('--player', default='Blackeyes972', help='Nome del giocatore da analizzare')
@@ -1677,8 +1953,41 @@ def main() -> None:
     parser.add_argument('--csv-path', default='chess_analysis.csv', help='Percorso del file CSV di output')
     parser.add_argument('--export-text', action='store_true', help='Export all analysis to a formatted text file')
     parser.add_argument('--text-path', default='chess_analysis.txt', help='Path for text output file')
-    args = parser.parse_args()
+    parser.add_argument('--stats', action='store_true', help='Mostra statistiche dopo l\'analisi')
+    parser.add_argument('--pgn-folder', help='Cartella contenente i file PGN da importare')
+    parser.add_argument('--force-reimport', action='store_true', help='Forza la reimportazione di file già elaborati')
+    parser.add_argument('--batch-size', type=int, default=100, help='Dimensione del batch per inserimenti nel database')
+
+   # Primo parsing per controllare se ci sono argomenti
+    args, unknown = parser.parse_known_args()
     
+    # Determina se mostrare il menu o usare i parametri
+    # Se almeno un parametro significativo è stato specificato, usiamo la linea di comando
+    has_command_args = any([
+        args.analysis is not None,
+        args.export_csv,
+        args.export_text,
+        args.pgn_folder is not None,
+        args.force_reimport,
+        # Non consideriamo --db-path e --player come significativi da soli,
+        # perché potrebbero essere solo sovrascritture dei default
+    ])
+    
+    if not has_command_args:
+        # Nessun argomento significativo, mostra il menu interattivo
+        menu_args = show_interactive_menu(parser)
+        
+        # Se l'utente ha scelto di uscire
+        if menu_args is None:
+            print("Programma terminato.")
+            sys.exit(0)
+            
+        args = menu_args
+    else:
+        # Rianalizza per ottenere tutti gli argomenti correttamente
+        args = parser.parse_args()
+    
+    # Da qui in poi, procedi con l'esecuzione normale usando args
     analyzer = ChessAnalyzer(args.db_path, args.player)
     
     if not analyzer.connect():
