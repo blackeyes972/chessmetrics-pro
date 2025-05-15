@@ -8,6 +8,7 @@ import os
 import sqlite3
 import chess.pgn
 import argparse
+import hashlib
 from datetime import datetime
 import logging
 import sys
@@ -249,7 +250,6 @@ class ChessDBManager:
         Returns:
             str: Firma univoca della partita
         """
-        import hashlib
         
         # Raccogliamo informazioni chiave dagli header
         headers = game.headers
