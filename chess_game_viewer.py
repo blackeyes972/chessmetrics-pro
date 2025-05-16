@@ -219,7 +219,7 @@ class ChessGameViewer:
         Crea una GIF animata dell'intera partita di scacchi.
         
         Args:
-            output_path: Percorso dove salvare la GIF. Se None, usa il nome della partita.
+            output_path: Percorso dove salvare la GIF. Se None, usa il nome della partita nella directory gif_files.
             delay: Ritardo tra i frame in millisecondi (default 500ms).
             
         Returns:
@@ -229,13 +229,46 @@ class ChessGameViewer:
             print("Nessuna partita caricata.")
             return None
         
+        # Verifica se le librerie necessarie sono installate
         try:
-            # Importa le librerie necessarie
             from PIL import Image
+        except ImportError:
+            print("La libreria Pillow non è installata. Installa con: pip install Pillow")
+            return None
+        
+        # Controlla se è disponibile almeno uno dei converter SVG→PNG
+        svg_converter_available = False
+        try:
+            import cairosvg
+            svg_converter_available = True
+            svg_converter = "cairosvg"
+        except ImportError:
+            try:
+                from svglib.svglib import svg2rlg
+                from reportlab.graphics import renderPM
+                svg_converter_available = True
+                svg_converter = "svglib"
+            except ImportError:
+                pass
+
+        if not svg_converter_available:
+            print("È necessario installare cairosvg o svglib per creare GIF.")
+            print("pip install cairosvg")
+            print("oppure")
+            print("pip install svglib reportlab")
+            return None
+        
+        try:
             import io
             import os
             
-            # Se non è specificato un percorso di output, crea uno basato sui dati della partita
+            # Crea la directory predefinita gif_files se non esiste
+            default_gif_dir = os.path.join(os.getcwd(), "gif_files")
+            if not os.path.exists(default_gif_dir):
+                os.makedirs(default_gif_dir)
+                print(f"Creata directory per GIF: {default_gif_dir}")
+            
+            # Se non è specificato un percorso di output, crea uno basato sui dati della partita nella directory gif_files
             if output_path is None:
                 self.cursor.execute("""
                     SELECT white_player, black_player, date
@@ -243,10 +276,23 @@ class ChessGameViewer:
                     WHERE id = ?
                 """, (self.game_id,))
                 white, black, date = self.cursor.fetchone()
-                filename = f"{white}_vs_{black}_{date}.gif".replace(" ", "_").replace(".", "-")
-                output_path = os.path.join(os.getcwd(), filename)
+                # Sostituisci spazi e punti solo nella parte del nome, NON nell'estensione
+                safe_name = f"{white}_vs_{black}_{date}".replace(" ", "_").replace(".", "-")
+                filename = f"{safe_name}.gif"  # Aggiungi l'estensione .gif separatamente
+                output_path = os.path.join(default_gif_dir, filename)
+            elif not output_path.lower().endswith('.gif'):
+                # Assicurati che il percorso specificato dall'utente abbia l'estensione .gif
+                output_path = output_path + '.gif'
+            
+            # Assicurati che la directory di destinazione esista
+            output_dir = os.path.dirname(output_path)
+            if output_dir and not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+                print(f"Creata directory: {output_dir}")
             
             print(f"Generazione GIF della partita in corso...")
+            print(f"La GIF verrà salvata in: {output_path}")
+            print(f"Utilizzo converter SVG: {svg_converter}")
             
             # Salva la posizione corrente per ripristinarla alla fine
             current_position = self.current_move_index
@@ -260,38 +306,22 @@ class ChessGameViewer:
             
             # Funzione per convertire SVG in immagine PIL
             def svg_to_pil(svg_data):
-                """Converte SVG in un'immagine PIL usando vari metodi disponibili."""
-                try:
-                    # Prova prima con cairosvg
-                    import cairosvg
+                """Converte SVG in un'immagine PIL usando il converter disponibile."""
+                if svg_converter == "cairosvg":
                     png_data = io.BytesIO()
                     cairosvg.svg2png(bytestring=svg_data.encode('utf-8'), write_to=png_data)
                     png_data.seek(0)
                     return Image.open(png_data)
-                except ImportError:
-                    try:
-                        # Prova con svglib se cairosvg non è disponibile
-                        from svglib.svglib import svg2rlg
-                        from reportlab.graphics import renderPM
-                        drawing = svg2rlg(io.StringIO(svg_data))
-                        png_data = io.BytesIO()
-                        renderPM.drawToFile(drawing, png_data, fmt="PNG")
-                        png_data.seek(0)
-                        return Image.open(png_data)
-                    except ImportError:
-                        # Se nessuna delle librerie è disponibile, informiamo l'utente
-                        print("È necessario installare cairosvg o svglib per creare GIF.")
-                        print("pip install cairosvg")
-                        print("oppure")
-                        print("pip install svglib reportlab")
-                        return None
+                else:  # svglib
+                    drawing = svg2rlg(io.StringIO(svg_data))
+                    png_data = io.BytesIO()
+                    renderPM.drawToFile(drawing, png_data, fmt="PNG")
+                    png_data.seek(0)
+                    return Image.open(png_data)
             
             # Aggiungi la posizione iniziale
             svg_data = chess.svg.board(self.board, size=400)
             initial_img = svg_to_pil(svg_data)
-            if initial_img is None:
-                # Se la conversione fallisce, usciamo
-                return None
             images.append(initial_img)
             
             # Esegui tutte le mosse e cattura le immagini
@@ -303,9 +333,6 @@ class ChessGameViewer:
                 # Genera SVG e converti in immagine PIL
                 svg_data = chess.svg.board(self.board, size=400)
                 img = svg_to_pil(svg_data)
-                if img is None:
-                    # Se la conversione fallisce, usciamo
-                    return None
                 images.append(img)
                 
                 # Mostra progresso
@@ -322,6 +349,7 @@ class ChessGameViewer:
                     loop=0  # 0 significa loop infinito
                 )
                 print(f"GIF creata con successo: {output_path}")
+                print(f"Dimensione file: {os.path.getsize(output_path) / (1024*1024):.2f} MB")
             
             # Ripristina la posizione originale
             self.board = chess.Board()
@@ -335,7 +363,9 @@ class ChessGameViewer:
             return output_path
         
         except Exception as e:
+            import traceback
             print(f"Errore durante la creazione della GIF: {e}")
+            print(traceback.format_exc())
             return None
 
     def run_interactive(self):
@@ -416,7 +446,7 @@ class ChessGameViewer:
     def navigate_game(self):
         """Interfaccia per navigare attraverso le mosse di una partita."""
         while True:
-            print("\nComandi: [n]ext, [p]rev, [g]o to move, [r]estart, [q]uit")
+            print("\nComandi: [n]ext, [p]rev, [g]o to move, [r]estart, [s]ave gif, [q]uit")
             command = input("Comando: ").lower()
             
             if command.startswith('n'):
@@ -455,6 +485,21 @@ class ChessGameViewer:
                 self.current_move_index = -1
                 print("Partita riavviata alla posizione iniziale.")
                 self.display_board()
+            elif command.startswith('s'):
+                        # Nuovo comando per salvare la partita come GIF
+                        output_path = input("Percorso di output (lascia vuoto per default): ")
+                        delay = input("Ritardo tra i frame in millisecondi (default 500): ")
+                        
+                        if not output_path:
+                            output_path = None
+                        
+                        try:
+                            delay_val = int(delay) if delay else 500
+                        except ValueError:
+                            delay_val = 500
+                            print("Ritardo non valido, uso il valore predefinito di 500 ms.")
+                        
+                        self.create_game_gif(output_path, delay_val)
             elif command.startswith('q'):
                 break
             else:
