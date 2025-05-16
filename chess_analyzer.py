@@ -1713,7 +1713,7 @@ def show_interactive_menu(args_parser):
     while True:
         clear_screen()
         print_title("ChessMetrics Pro - Menu Interattivo")
-        print("\nVersione: 0.1.0-alpha")
+        print("\nVersione: 0.2.0-alpha")
         print("❗ Attenzione: Software in fase alpha - Utilizzare a proprio rischio\n")
         
         print("OPERAZIONI DISPONIBILI:")
@@ -1941,7 +1941,7 @@ def show_interactive_menu(args_parser):
 
 def main() -> None:
     """Funzione principale dello script."""
-    print("\033[1;33mChessMetrics Pro v0.1.0-alpha\033[0m")
+    print("\033[1;33mChessMetrics Pro v0.2.0-alpha\033[0m")
     print("\033[1;33mATTENZIONE: Questo software è in fase alpha. Utilizzare a proprio rischio.\033[0m\n")
 
     parser = argparse.ArgumentParser(description='Analisi avanzata di partite di scacchi da database SQLite')
