@@ -6,6 +6,7 @@ chess_games.db
 chess_import.log
 .directory
 Chess.md
+docs/resoconto.md
 pgn_files/
 gif_files/
 
