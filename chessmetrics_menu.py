@@ -337,9 +337,9 @@ class ChessMetricsApp:
                     self.analyzer.export_all_to_csv(filename)
                     print(f"Analisi esportata in {filename}")
                 elif choice == 10:
-                    filename = input("Nome del file di testo [analisi_scacchi.txt]: ").strip()
+                    filename = input("Nome del file di testo [chess_analysis.txt]: ").strip()
                     if not filename:
-                        filename = "analisi_scacchi.txt"
+                        filename = "chess_analysis.txt"
                     self.analyzer.export_analysis_to_text(filename)
                     print(f"Analisi esportata in {filename}")
             

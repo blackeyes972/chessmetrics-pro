@@ -1228,7 +1228,7 @@ class ChessAnalyzer:
         except Exception as e:
             print(f"Errore durante l'esportazione: {e}")
 
-    def export_analysis_to_text(self, filename: str = 'analisi_scacchi.txt') -> None:
+    def export_analysis_to_text(self, filename: str = 'chess_analysis.txt') -> None:
         """Esporta tutti i risultati delle analisi in un file di testo formattato.
         
         Questa funzione genera un rapporto di testo formattato con tutte le analisi,
@@ -1871,9 +1871,9 @@ def show_interactive_menu(args_parser):
             selected_args['db_path'] = db_path
             
             # Ottieni percorso file di testo
-            text_path = input("\nInserisci il percorso del file di testo da generare [analisi_scacchi.txt]: ").strip()
+            text_path = input("\nInserisci il percorso del file di testo da generare [chess_analysis.txt]: ").strip()
             if not text_path:
-                text_path = "analisi_scacchi.txt"
+                text_path = "chess_analysis.txt"
             selected_args['text_path'] = text_path
             
             # Imposta parametri per text export
