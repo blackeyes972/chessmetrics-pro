@@ -1,6 +1,6 @@
 # ChessMetrics Pro
 
-![ChessMetrics Pro Logo](https://github.com/blackeyyes972/chessmetrics-pro/raw/main/docs/images/logo.png)
+![ChessMetrics Pro Logo](https://github.com/blackeyes972/chessmetrics-pro/raw/main/docs/images/logo.png)
 
 ## Analisi Avanzata delle Partite di Scacchi
 
