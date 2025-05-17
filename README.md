@@ -6,7 +6,7 @@
 
 ChessMetrics Pro è un software professionale per l'analisi avanzata delle partite di scacchi. Progettato per giocatori di tutti i livelli, dal principiante all'esperto, permette di analizzare un database di partite per ottenere insights strategici sulla propria performance.
 
-[![Status](https://img.shields.io/badge/status-alpha-red)](https://github.com/blackeyes972/chessmetrics-pro)
+[![Status](https://img.shields.io/badge/status-beta-blue)](https://github.com/blackeyes972/chessmetrics-pro)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![SQLite](https://img.shields.io/badge/database-SQLite-green.svg)](https://www.sqlite.org/)
 [![License](https://img.shields.io/badge/license-GPL%20v3-orange.svg)](LICENSE)
@@ -16,18 +16,9 @@ ChessMetrics Pro è un software professionale per l'analisi avanzata delle parti
 ## Stato del Progetto
 
 ## Versione Attuale
-**0.2.0-alpha**
+**0.3.0-beta**
 
-⚠️ **NOTA: ChessMetrics Pro è attualmente in fase ALPHA** ⚠️
-
-Questo significa che:
-- Le funzionalità principali sono implementate ma potrebbero contenere bug
-- L'interfaccia utente potrebbe subire modifiche significative
-- La documentazione è ancora in sviluppo
-- Non consigliamo l'uso in ambienti di produzione critici
-
-Siamo alla ricerca di feedback e segnalazioni per migliorare il software. Se riscontri problemi, 
-per favore apri una issue sul repository GitHub.
+ChessMetrics Pro è ora in fase **BETA**, con tutte le funzionalità principali implementate e un'interfaccia grafica completa. Il software è pronto per essere utilizzato da un pubblico più ampio, pur continuando a ricevere miglioramenti e ottimizzazioni.
 
 ---
 
@@ -37,18 +28,26 @@ ChessMetrics Pro offre un'analisi completa delle partite di scacchi attraverso v
 
 ### Componenti Principali:
 
-1. **Menu Unificato** (NUOVO!):
+1. **Interfaccia Grafica PyQt6** (NUOVO!):
+   - Interfaccia grafica moderna e intuitiva
+   - Visualizzazione integrata dei grafici
+   - Navigazione fluida tra le funzionalità
+   - Supporto per toolbar interattive nei grafici
+   - Salvataggio diretto delle immagini dei grafici
+
+2. **Menu a Riga di Comando** (Alternativa):
    - Interfaccia centralizzata per tutti i componenti
    - Navigazione intuitiva tra le funzionalità
    - Gestione configurazione dell'applicazione
    - Verifica e inizializzazione automatica del database
 
-2. **Importatore PGN**:
+3. **Importatore PGN**:
    - Importa file PGN in un database SQLite con rilevazione automatica di duplicati
    - Processamento in batch per grandi collezioni di partite
+   - Visualizzazione del progresso in tempo reale
    - Gestione robusta degli errori e supporto multi-encoding
 
-3. **Analizzatore di Partite**:
+4. **Analizzatore di Partite**:
    - Panoramica generale: Statistiche complessive, distribuzione vittorie/sconfitte/pareggi
    - Analisi delle aperture: Identifica le aperture più efficaci e problematiche
    - Analisi degli avversari: Monitoraggio delle performance contro diversi avversari
@@ -56,15 +55,14 @@ ChessMetrics Pro offre un'analisi completa delle partite di scacchi attraverso v
    - Evoluzione dell'Elo: Traccia la progressione del tuo rating nel tempo
    - Analisi degli errori: Focus sulle sconfitte rapide per identificare debolezze ricorrenti
    - Analisi per categoria ECO: Performance nelle diverse famiglie di aperture
-   - Esportazione dei risultati: Esporta le analisi in formato CSV o file di testo formattato
+   - Esportazione organizzata dei risultati in cartella dedicata "analysis"
 
-4. **Visualizzatore di Partite** (NUOVO!):
+5. **Visualizzatore di Partite**:
    - Visualizzazione interattiva delle partite dal database
    - Ricerca avanzata di partite per giocatore, data, evento o ECO
    - Navigazione mossa per mossa con notazione SAN
-   - Visualizzazione ASCII della scacchiera nel terminale
-   - Opzione per visualizzare la scacchiera in formato SVG nel browser
-   - **Generatore di GIF animata** (NUOVO!): Crea GIF delle partite per analisi o condivisione
+   - Visualizzazione grafica SVG della scacchiera direttamente nell'interfaccia
+   - **Generatore di GIF animata**: Crea GIF delle partite per analisi o condivisione
 
 ---
 
@@ -95,101 +93,90 @@ pip install -r requirements.txt
 Oppure, se preferisci installare singolarmente i pacchetti:
 
 ```bash
-pip install pandas matplotlib seaborn tabulate python-chess pillow cairosvg
+# Pacchetti principali
+pip install pandas matplotlib seaborn tabulate python-chess
+
+# Per la generazione di GIF
+pip install pillow cairosvg
+
+# Per l'interfaccia grafica PyQt6
+pip install PyQt6
 ```
 
 ---
 
 ## 📊 Utilizzo
 
-### Menu Principale (Nuovo!)
+### Interfaccia Grafica (Raccomandata)
 
-Il modo più semplice per utilizzare ChessMetrics Pro è attraverso il menu centralizzato:
+Il modo più semplice per utilizzare ChessMetrics Pro è attraverso l'interfaccia grafica:
 
 ```bash
-# Avvia il menu principale
+# Avvia l'interfaccia grafica
+python chessmetrics_gui.py
+```
+
+L'interfaccia grafica offre:
+- **Importazione PGN** con feedback visivo in tempo reale
+- **Analisi partite** con grafici interattivi integrati
+- **Visualizzazione partite** con scacchiera SVG integrata
+- **Configurazione** semplice dell'applicazione
+
+### Menu a Riga di Comando (Alternativa)
+
+È ancora possibile utilizzare il menu a riga di comando:
+
+```bash
+# Avvia il menu a riga di comando
 python chessmetrics_menu.py
 ```
 
-Questo fornisce un'interfaccia intuitiva per:
-- Importare file PGN
-- Analizzare partite
-- Visualizzare partite
-- Configurare l'applicazione
-
 ### Componenti individuali
 
-È comunque possibile utilizzare i componenti individuali:
+È inoltre possibile utilizzare i componenti individuali:
 
 #### Importazione PGN
 
 ```bash
-# Importazione base con impostazioni predefinite
+# Importazione con impostazioni predefinite
 python chess_import.py 
 
-# Specificare una cartella PGN diversa
-python chess_import.py --pgn-folder miei_file_pgn
-
-# Forzare la reimportazione di file già elaborati
-python chess_import.py --force-reimport
-
-# Mostrare statistiche dopo l'importazione
-python chess_import.py --stats
+# Opzioni aggiuntive
+python chess_import.py --pgn-folder miei_file_pgn --force-reimport --stats
 ```
 
 #### Analisi delle partite
 
 ```bash
-# Esegui tutte le analisi (con grafici interattivi)
+# Analisi completa
 python chess_analyzer.py
 
-# Analizza un giocatore specifico
-python chess_analyzer.py --player "MagnusCarlsen"
+# Analisi specifica
+python chess_analyzer.py --player "MagnusCarlsen" --analysis elo
 
-# Esegui solo un tipo di analisi
-python chess_analyzer.py --analysis openings
-python chess_analyzer.py --analysis elo
-
-# Esporta tutte le analisi in CSV o testo
-python chess_analyzer.py --export-csv
-python chess_analyzer.py --export-text
+# Esportazione
+python chess_analyzer.py --export-csv --export-text
 ```
 
-#### Visualizzatore di partite (Nuovo!)
+#### Visualizzatore di partite
 
 ```bash
-# Avvia il visualizzatore interattivo
+# Visualizzatore interattivo
 python chess_game_viewer.py
-
-# Specifica un database alternativo
-python chess_game_viewer.py percorso_database.db
 ```
-
-Il visualizzatore offre un'interfaccia interattiva che permette di:
-- Cercare partite per vari criteri
-- Navigare mossa per mossa
-- Visualizzare la scacchiera in formato ASCII o SVG
-- Generare GIF animate delle partite
 
 ---
 
-## 🔧 Configurazione
+## 🔧 Organizzazione File
 
-ChessMetrics Pro è altamente configurabile. I principali parametri possono essere impostati tramite:
-- Menu delle impostazioni nell'interfaccia principale (consigliato)
-- Argomenti della linea di comando
-- Modificando direttamente il codice
+ChessMetrics Pro organizza i file di output in modo strutturato:
 
-### File e Posizioni
+- **pgn_files/**: Directory predefinita per i file PGN da importare
+- **analysis/**: Directory per i file di analisi esportati (CSV, TXT)
+- **gif_files/**: Directory per le GIF animate delle partite
+- **chess_games.db**: Database SQLite per l'archiviazione delle partite
 
-- `--pgn-folder`: Cartella contenente i file PGN (default: `pgn_files`)
-- `--db-path`: Percorso del database SQLite (default: `chess_games.db`)
-- `--csv-path`: Percorso del file CSV di output (default: `analisi_scacchi.csv`)
-- `--text-path`: Percorso del file di testo di output (default: `analisi_scacchi.txt`)
-
-### Performance
-
-- `--batch-size`: Dimensione del batch per inserimenti nel database (default: `100`)
+Questa struttura mantiene il progetto organizzato e facilita la gestione dei dati.
 
 ---
 
@@ -226,9 +213,17 @@ CREATE TABLE IF NOT EXISTS games (
 );
 ```
 
-### Generazione di GIF (Nuova funzionalità!)
+### Interfaccia grafica PyQt6
 
-La nuova funzionalità di generazione GIF:
+La nuova interfaccia grafica sfrutta PyQt6 per offrire:
+- Visualizzazione integrata mediante schede per tutte le funzionalità
+- Multithreading per mantenere l'interfaccia reattiva durante operazioni lunghe
+- Grafici matplotlib integrati con toolbar interattive
+- Visualizzazione SVG della scacchiera direttamente nell'interfaccia
+
+### Generazione di GIF
+
+La funzionalità di generazione GIF:
 - Crea animazioni delle partite con posizioni fotogramma per fotogramma
 - Consente di impostare la velocità dell'animazione regolando il ritardo dei frame
 - Supporta convertitori SVG diversi (cairosvg o svglib)
@@ -257,90 +252,34 @@ ChessMetrics Pro genera diverse visualizzazioni grafiche durante l'analisi inter
 - Grafici a barre per le performance con aperture specifiche
 - Grafici temporali per l'evoluzione dell'Elo
 - Grafici comparativi per le prestazioni nelle diverse fasi di gioco
-- Heatmap per identificare i punti di forza e debolezza
-- **NUOVO!** GIF animate delle partite complete
-
----
-
-## 🔍 Esempio di Output
-
-### Statistiche di Base
-
-```
-===== PANORAMICA GENERALE =====
-Giocatore: Blackeyes972
-Totale partite: 156
-Partite con il bianco: 78 (50.0%)
-Partite con il nero: 78 (50.0%)
-Vittorie: 62 (39.7%)
-Sconfitte: 86 (55.1%)
-Pareggi: 8 (5.1%)
-Lunghezza media partite: 37.3 mosse
-Elo medio del giocatore: 528
-Elo medio degli avversari: 531
-```
-
-### Migliori Aperture
-
-```
---- MIGLIORI APERTURE (PER TASSO DI VITTORIA) ---
-+-----+--------------------------+-------+----------+---------+-----------+----------------------+
-| ECO | Apertura                 | Partite | Vittorie | Pareggi | Sconfitte | Percentuale_Vittorie |
-+-----+--------------------------+-------+----------+---------+-----------+----------------------+
-| C47 | Four Knights Game        |     5 |        4 |       0 |         1 |                80.00 |
-| B07 | Pirc Defense            |    12 |        7 |       1 |         4 |                58.33 |
-| C50 | Italian Game             |     8 |        4 |       1 |         3 |                50.00 |
-| C45 | Scotch Game              |     6 |        3 |       0 |         3 |                50.00 |
-| C67 | Ruy Lopez                |     4 |        1 |       0 |         3 |                25.00 |
-+-----+--------------------------+-------+----------+---------+-----------+----------------------+
-```
-
-### Visualizzatore di Partite (Nuovo!)
-
-```
-==================================================
-Partita: Blackeyes972 vs Arti990, 1-0
-Data: 2025.04.16, Evento: Live Chess
-Luogo: Chess.com
-ECO: D02, Apertura: 
-==================================================
-
-r n b q k b n r
-p p p p p p p p
-. . . . . . . .
-. . . . . . . .
-. . . P . . . .
-. . . . . . . .
-P P P . P P P P
-R N B Q K B N R
-
-Comandi: [n]ext, [p]rev, [g]o to move, [r]estart, [s]ave gif, [q]uit
-Comando: 
-```
+- Grafici interattivi con funzionalità di zoom, pan e salvataggio
+- GIF animate delle partite complete
 
 ---
 
 ## ⚙️ Dipendenze
 
-- [python-chess](https://python-chess.readthedocs.io/): Libreria per manipolazione di partite e file PGN
+- [python-chess](https://python-chess.readthedocs.io/): Manipolazione di partite e file PGN
 - [pandas](https://pandas.pydata.org/): Analisi e manipolazione dei dati
 - [matplotlib](https://matplotlib.org/): Visualizzazione dei dati
 - [seaborn](https://seaborn.pydata.org/): Visualizzazioni statistiche avanzate
 - [tabulate](https://pypi.org/project/tabulate/): Formattazione delle tabelle
 - [sqlite3](https://docs.python.org/3/library/sqlite3.html): Interfaccia per database SQLite
+- [PyQt6](https://www.riverbankcomputing.com/software/pyqt/): Interfaccia grafica
 - [Pillow](https://pillow.readthedocs.io/): Elaborazione immagini per generazione GIF
 - [cairosvg](https://cairosvg.org/): Conversione da SVG a PNG (per GIF)
-- [svglib](https://github.com/deeplook/svglib): Alternativa per la conversione SVG
 
 ---
 
-## 📝 Note Aggiuntive
+## 🔍 Roadmap
 
-- **Performance**: Per database di grandi dimensioni (>10.000 partite), l'analisi potrebbe richiedere più tempo
-- **Compatibilità**: Testato su Windows 10/11, macOS e Linux (Ubuntu/Debian)
-- **Visualizzazione della scacchiera**: Adattamento automatico all'ambiente (terminale o browser)
-- **Generazione GIF**: Richiede librerie aggiuntive (Pillow e cairosvg o svglib)
-- **Limitazioni**: L'analisi tattica approfondita richiederebbe l'integrazione con un motore di scacchi (funzionalità pianificata per versioni future)
+Per la versione 1.0 sono previste le seguenti funzionalità:
+
+- **Integrazione con motori di scacchi** per analisi tattiche avanzate
+- **Filtri avanzati** per la ricerca di partite
+- **Analisi comparativa** tra diversi giocatori
+- **Supporto multilingua** per l'interfaccia utente
+- **Installer** per un'installazione semplificata
 
 ---
 
@@ -359,6 +298,7 @@ Questo progetto è rilasciato sotto la licenza GPL v3. Vedi il file [LICENSE](LI
 - La community di [Python-Chess](https://github.com/niklasf/python-chess)
 - [Chess.com](https://www.chess.com/) per il formato PGN standard
 - Tutti i contributori della documentazione ECO
+- La community di [PyQt](https://www.riverbankcomputing.com/software/pyqt/) per l'eccellente toolkit GUI
 
 ---
 

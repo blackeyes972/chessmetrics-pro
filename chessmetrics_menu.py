@@ -33,7 +33,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Costanti
-VERSION = "0.2.0-alpha"
+VERSION = "0.3.0-beta"
 DEFAULT_DB_PATH = "chess_games.db"
 DEFAULT_PGN_FOLDER = "pgn_files"
 DEFAULT_PLAYER = "Blackeyes972"
