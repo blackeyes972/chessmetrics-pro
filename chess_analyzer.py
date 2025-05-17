@@ -952,8 +952,18 @@ class ChessAnalyzer:
         Args:
             filename: Nome del file CSV di output
         """
+       
         try:
-            print(f"\nEsportazione di tutte le analisi in '{filename}'...")
+            # Crea la cartella analysis se non esiste
+            analysis_dir = os.path.join(os.getcwd(), "analysis")
+            if not os.path.exists(analysis_dir):
+                os.makedirs(analysis_dir)
+                print(f"\nCreata directory 'analysis' per i file di output")
+        
+            # Costruisci il percorso completo
+            if not os.path.isabs(filename):
+                filename = os.path.join(analysis_dir, filename)
+                print(f"\nEsportazione di tutte le analisi in '{filename}'...")
             
             # Lista per contenere tutti i dataframes da esportare
             all_dfs = []
@@ -1237,7 +1247,19 @@ class ChessAnalyzer:
         Args:
             filename: Nome del file di testo di output
         """
+
+
         try:
+            # Crea la cartella analysis se non esiste
+            analysis_dir = os.path.join(os.getcwd(), "analysis")
+            if not os.path.exists(analysis_dir):
+                os.makedirs(analysis_dir)
+                print(f"\nCreata directory 'analysis' per i file di output")
+            
+            # Costruisci il percorso completo
+            if not os.path.isabs(filename):
+                filename = os.path.join(analysis_dir, filename)
+        
             # Impostiamo un formato tabella ottimizzato per il testo
             formato_tabella = 'grid'  # Alternative: 'simple', 'plain', 'github'
             

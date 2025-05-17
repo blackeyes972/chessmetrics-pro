@@ -9,6 +9,7 @@ Chess.md
 docs/resoconto.md
 pgn_files/
 gif_files/
+analysis/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
