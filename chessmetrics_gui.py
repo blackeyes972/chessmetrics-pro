@@ -10,6 +10,8 @@ import time
 from datetime import datetime
 from threading import Thread
 from typing import Optional, Dict, Any, List, Tuple
+# Import the data_utils 
+from data_utils import get_db_path, get_log_path, initialize_directories
 
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout, 
                            QHBoxLayout, QLabel, QPushButton, QFileDialog, QCheckBox, 
@@ -48,7 +50,7 @@ from PyQt6.QtCore import QByteArray
 
 # Costanti
 VERSION = "0.3.0-beta"
-DEFAULT_DB_PATH = "chess_games.db"
+DEFAULT_DB_PATH = get_db_path()  # Use our utility function
 DEFAULT_PGN_FOLDER = "pgn_files"
 DEFAULT_PLAYER = "Blackeyes972"
 
@@ -1870,6 +1872,8 @@ class ChessMetricsPro(QMainWindow):
 
 def main():
     """Funzione principale."""
+    # Initialize directories before anything else
+    initialize_directories()
     app = QApplication(sys.argv)
     window = ChessMetricsPro()
     sys.exit(app.exec())

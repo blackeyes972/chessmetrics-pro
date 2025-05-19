@@ -14,17 +14,26 @@ import logging
 import sys
 import re
 from typing import List, Dict, Tuple, Optional, Any, Union
+from data_utils import get_db_path, get_log_path, initialize_directories
+
 
 # Configurazione logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler("chess_import.log"),
+        logging.FileHandler(get_log_path("logs/chess_import.log")),
         logging.StreamHandler()
     ]
 )
 logger = logging.getLogger(__name__)
+
+# Costanti
+VERSION = "0.3.0-beta"
+DEFAULT_DB_PATH = get_db_path("chess_games.db")  # Usa get_db_path per il percorso del database
+DEFAULT_PGN_FOLDER = "pgn_files"
+DEFAULT_PLAYER = "Blackeyes972"
+CONFIG_FILE = get_db_path("chessmetrics_config.ini")  # Anche il file di configurazione nella cartella data
 
 class ChessDBManager:
     """Gestisce le operazioni del database per l'archiviazione delle partite di scacchi."""
@@ -35,7 +44,7 @@ class ChessDBManager:
         Args:
             db_path: Percorso del file database SQLite
         """
-        self.db_path = db_path
+        self.db_path = DEFAULT_DB_PATH
         self.conn = None
         self.cursor = None
         self.processed_files = set()
@@ -704,6 +713,9 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     """Funzione principale."""
+
+    # Inizializza le directory prima di tutto il resto
+    initialize_directories()
     args = parse_args()
     
     # Imposta il livello di log in base all'argomento verbose

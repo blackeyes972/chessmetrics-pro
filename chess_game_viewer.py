@@ -11,6 +11,16 @@ import chess.svg
 from IPython.display import SVG, display
 import tempfile
 import webbrowser
+from data_utils import get_db_path, get_log_path, initialize_directories
+
+
+
+# Costanti
+VERSION = "0.3.0-beta"
+DEFAULT_DB_PATH = get_db_path("chess_games.db")  # Usa get_db_path per il percorso del database
+DEFAULT_PGN_FOLDER = "pgn_files"
+DEFAULT_PLAYER = "Blackeyes972"
+CONFIG_FILE = get_db_path("chessmetrics_config.ini")  # Anche il file di configurazione nella cartella data
 
 class ChessGameViewer:
     """Visualizzatore di partite di scacchi dal database."""
@@ -21,7 +31,7 @@ class ChessGameViewer:
         Args:
             db_path: Percorso al database SQLite
         """
-        self.db_path = db_path
+        self.db_path = DEFAULT_DB_PATH
         self.conn = None
         self.cursor = None
         self.game_id = None
@@ -515,7 +525,7 @@ if __name__ == "__main__":
     import sys
     
     # Percorso predefinito del database
-    db_path = "chess_games.db"
+    db_path = DEFAULT_DB_PATH
     
     # Se viene fornito un percorso come argomento, lo usa
     if len(sys.argv) > 1:

@@ -11,7 +11,8 @@ import sqlite3
 import logging
 from datetime import datetime
 from typing import Optional, Dict, Any, List, Tuple
-
+# Importa le funzioni di utilità per la gestione dei percorsi
+from data_utils import get_db_path, get_log_path, initialize_directories
 # Importazione dei moduli dell'applicazione
 try:
     from chess_import import ChessDBManager
@@ -26,7 +27,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler("chessmetrics.log"),
+        logging.FileHandler(get_log_path("logs/chessmetrics.log")),
         logging.StreamHandler()
     ]
 )
@@ -34,10 +35,10 @@ logger = logging.getLogger(__name__)
 
 # Costanti
 VERSION = "0.3.0-beta"
-DEFAULT_DB_PATH = "chess_games.db"
+DEFAULT_DB_PATH = get_db_path("chess_games.db")  # Usa get_db_path per il percorso del database
 DEFAULT_PGN_FOLDER = "pgn_files"
 DEFAULT_PLAYER = "Blackeyes972"
-CONFIG_FILE = "chessmetrics_config.ini"
+CONFIG_FILE = get_db_path("chessmetrics_config.ini")  # Anche il file di configurazione nella cartella data
 
 class ChessMetricsApp:
     """Classe principale per l'applicazione ChessMetrics Pro."""
@@ -531,6 +532,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     """Funzione principale."""
+    # Inizializza le directory prima di tutto il resto
+    initialize_directories()
     args = parse_args()
     
     app = ChessMetricsApp(args.db_path)
