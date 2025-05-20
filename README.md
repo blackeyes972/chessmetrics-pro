@@ -6,19 +6,20 @@
 
 ChessMetrics Pro è un software professionale per l'analisi avanzata delle partite di scacchi. Progettato per giocatori di tutti i livelli, dal principiante all'esperto, permette di analizzare un database di partite per ottenere insights strategici sulla propria performance.
 
-[![Status](https://img.shields.io/badge/status-beta-blue)](https://github.com/blackeyes972/chessmetrics-pro)
+[![Status](https://img.shields.io/badge/status-stable-brightgreen)](https://github.com/blackeyes972/chessmetrics-pro)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![SQLite](https://img.shields.io/badge/database-SQLite-green.svg)](https://www.sqlite.org/)
 [![License](https://img.shields.io/badge/license-GPL%20v3-orange.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-1.0-blue)](https://github.com/blackeyes972/chessmetrics-pro)
 
 ---
 
 ## Stato del Progetto
 
 ## Versione Attuale
-**0.3.0-beta**
+**1.0**
 
-ChessMetrics Pro è ora in fase **BETA**, con tutte le funzionalità principali implementate e un'interfaccia grafica completa. Il software è pronto per essere utilizzato da un pubblico più ampio, pur continuando a ricevere miglioramenti e ottimizzazioni.
+ChessMetrics Pro è ora una versione **STABILE 1.0**, con tutte le funzionalità principali implementate, inclusa l'integrazione con i motori di scacchi per analisi tattiche avanzate. Il software è pronto per essere utilizzato in ambito professionale, offrendo un'esperienza completa dall'importazione all'analisi dettagliata delle partite.
 
 ---
 
@@ -28,7 +29,7 @@ ChessMetrics Pro offre un'analisi completa delle partite di scacchi attraverso v
 
 ### Componenti Principali:
 
-1. **Interfaccia Grafica PyQt6** (NUOVO!):
+1. **Interfaccia Grafica PyQt6**:
    - Interfaccia grafica moderna e intuitiva
    - Visualizzazione integrata dei grafici
    - Navigazione fluida tra le funzionalità
@@ -64,6 +65,28 @@ ChessMetrics Pro offre un'analisi completa delle partite di scacchi attraverso v
    - Visualizzazione grafica SVG della scacchiera direttamente nell'interfaccia
    - **Generatore di GIF animata**: Crea GIF delle partite per analisi o condivisione
 
+6. **ChessEngine Analysis** (NUOVO!):
+   - **Analisi delle Posizioni**:
+     - Valutazione completa di ogni posizione della partita
+     - Identificazione automatica delle posizioni critiche
+     - Calcolo di varianti alternative ottimali
+     - Analisi multipla con possibilità di configurare profondità e tempo
+   - **Rilevamento Avanzato degli Errori**:
+     - Classificazione automatica in blunder (??), mistake (?), inaccuracy (?!)
+     - Riconoscimento di mosse eccellenti e buone
+     - Commenti dettagliati che spiegano gli errori
+   - **Visualizzazione Interattiva**:
+     - Grafico dell'andamento della valutazione durante la partita
+     - Evidenziazione delle posizioni critiche
+     - Scacchiera interattiva con navigazione avanzata
+   - **Esportazioni Ricche**:
+     - PGN Annotato con commenti e varianti
+     - HTML Interattivo con diagrammi delle posizioni critiche
+   - **Analisi delle Statistiche dei Giocatori**:
+     - Errori più comuni per giocatore
+     - Distribuzione degli errori per fase di gioco
+     - Aperture problematiche e punti di forza
+
 ---
 
 ## 🚀 Installazione
@@ -72,6 +95,7 @@ ChessMetrics Pro offre un'analisi completa delle partite di scacchi attraverso v
 
 - Python 3.8 o superiore
 - pip (gestore pacchetti Python)
+- Stockfish o altro motore UCI per l'analisi con motore
 
 ### Installazione dei pacchetti richiesti
 
@@ -112,14 +136,18 @@ pip install PyQt6
 Il modo più semplice per utilizzare ChessMetrics Pro è attraverso l'interfaccia grafica:
 
 ```bash
-# Avvia l'interfaccia grafica
+# Avvia l'interfaccia grafica principale
 python chessmetrics_gui.py
+
+# Avvia l'interfaccia grafica dell'analizzatore con motore
+python chess_engine_analysis_gui.py
 ```
 
 L'interfaccia grafica offre:
 - **Importazione PGN** con feedback visivo in tempo reale
 - **Analisi partite** con grafici interattivi integrati
 - **Visualizzazione partite** con scacchiera SVG integrata
+- **Analisi con motore** per identificazione errori e posizioni critiche
 - **Configurazione** semplice dell'applicazione
 
 ### Menu a Riga di Comando (Alternativa)
@@ -165,6 +193,23 @@ python chess_analyzer.py --export-csv --export-text
 python chess_game_viewer.py
 ```
 
+#### Analisi con motore di scacchi
+
+```bash
+# Elencare le partite disponibili
+python chess_engine_analysis.py --list-games
+
+# Analizzare una partita completa
+python chess_engine_analysis.py --game-id 123
+
+# Analizzare solo le posizioni critiche
+python chess_engine_analysis.py --game-id 123 --critical-only
+
+# Esportare in PGN o HTML
+python chess_engine_analysis.py --game-id 123 --export-pgn partita.pgn
+python chess_engine_analysis.py --game-id 123 --export-html
+```
+
 ---
 
 ## 🔧 Organizzazione File
@@ -173,7 +218,9 @@ ChessMetrics Pro organizza i file di output in modo strutturato:
 
 - **pgn_files/**: Directory predefinita per i file PGN da importare
 - **analysis/**: Directory per i file di analisi esportati (CSV, TXT)
+- **export/**: Directory per esportazioni PGN e HTML dell'analisi con motore
 - **gif_files/**: Directory per le GIF animate delle partite
+- **logs/**: Directory per i file di log dell'applicazione
 - **chess_games.db**: Database SQLite per l'archiviazione delle partite
 
 Questa struttura mantiene il progetto organizzato e facilita la gestione dei dati.
@@ -189,6 +236,10 @@ ChessMetrics Pro utilizza un database SQLite con le seguenti tabelle principali:
 - `games`: Informazioni generali sulle partite (giocatori, risultato, data, ECO, ecc.)
 - `moves`: Mosse di ogni partita in formato SAN e UCI
 - `import_metadata`: Metadati sull'importazione dei file PGN
+- `engine_analysis`: Risultati dell'analisi del motore
+- `engine_variations`: Varianti calcolate dal motore
+- `engine_comments`: Commenti generati in base all'analisi
+- `player_stats`: Statistiche aggregate per giocatore
 
 ```sql
 # Schema della tabella principale
@@ -215,11 +266,21 @@ CREATE TABLE IF NOT EXISTS games (
 
 ### Interfaccia grafica PyQt6
 
-La nuova interfaccia grafica sfrutta PyQt6 per offrire:
+L'interfaccia grafica sfrutta PyQt6 per offrire:
 - Visualizzazione integrata mediante schede per tutte le funzionalità
 - Multithreading per mantenere l'interfaccia reattiva durante operazioni lunghe
 - Grafici matplotlib integrati con toolbar interattive
 - Visualizzazione SVG della scacchiera direttamente nell'interfaccia
+
+### Analisi con motore di scacchi
+
+Il modulo di analisi con motore:
+- Utilizza l'interfaccia UCI (Universal Chess Interface) per comunicare con Stockfish
+- Calcola la valutazione precisa di ogni posizione in centipawns
+- Identifica automaticamente posizioni critiche basate su variazioni della valutazione
+- Classifica gli errori in base alla gravità con soglie configurabili
+- Genera commenti dettagliati che spiegano gli errori
+- Esporta l'analisi in formati standard (PGN) e interattivi (HTML)
 
 ### Generazione di GIF
 
@@ -252,7 +313,8 @@ ChessMetrics Pro genera diverse visualizzazioni grafiche durante l'analisi inter
 - Grafici a barre per le performance con aperture specifiche
 - Grafici temporali per l'evoluzione dell'Elo
 - Grafici comparativi per le prestazioni nelle diverse fasi di gioco
-- Grafici interattivi con funzionalità di zoom, pan e salvataggio
+- Grafici di valutazione del motore con evidenziazione delle posizioni critiche
+- Diagrammi delle posizioni chiave con commenti e varianti
 - GIF animate delle partite complete
 
 ---
@@ -268,18 +330,19 @@ ChessMetrics Pro genera diverse visualizzazioni grafiche durante l'analisi inter
 - [PyQt6](https://www.riverbankcomputing.com/software/pyqt/): Interfaccia grafica
 - [Pillow](https://pillow.readthedocs.io/): Elaborazione immagini per generazione GIF
 - [cairosvg](https://cairosvg.org/): Conversione da SVG a PNG (per GIF)
+- [Stockfish](https://stockfishchess.org/) o altro motore UCI: Analisi delle posizioni
 
 ---
 
 ## 🔍 Roadmap
 
-Per la versione 1.0 sono previste le seguenti funzionalità:
+Per le prossime versioni sono previste le seguenti funzionalità:
 
-- **Integrazione con motori di scacchi** per analisi tattiche avanzate
-- **Filtri avanzati** per la ricerca di partite
-- **Analisi comparativa** tra diversi giocatori
+- **Cloud storage** per condivisione dati
+- **App mobile** companion
+- **Modalità torneo** per gestire analisi in tempo reale
+- **Analisi comparativa avanzata** tra diversi giocatori
 - **Supporto multilingua** per l'interfaccia utente
-- **Installer** per un'installazione semplificata
 
 ---
 
@@ -299,6 +362,7 @@ Questo progetto è rilasciato sotto la licenza GPL v3. Vedi il file [LICENSE](LI
 - [Chess.com](https://www.chess.com/) per il formato PGN standard
 - Tutti i contributori della documentazione ECO
 - La community di [PyQt](https://www.riverbankcomputing.com/software/pyqt/) per l'eccellente toolkit GUI
+- Il team di [Stockfish](https://stockfishchess.org/) per il loro potente motore open source
 
 ---
 
@@ -310,4 +374,4 @@ Per domande, suggerimenti o segnalazioni di bug, contattare:
 
 ---
 
-*ChessMetrics Pro: Trasforma le tue partite in strategie vincenti.*
+*ChessMetrics Pro 1.0: Trasforma le tue partite in strategie vincenti.*

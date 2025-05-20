@@ -1,6 +1,5 @@
 # File proggetto
 1.py
-chess_engine_analysis.py
 chess_analysis.csv
 chess_analysis.txt
 chess_games.db
@@ -11,7 +10,7 @@ docs/resoconto.md
 pgn_files/
 gif_files/
 analysis/
-
+export/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

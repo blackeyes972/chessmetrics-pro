@@ -34,7 +34,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Costanti
-VERSION = "0.3.0-beta"
+VERSION = "1.0"
 DEFAULT_DB_PATH = get_db_path("chess_games.db")  # Usa get_db_path per il percorso del database
 DEFAULT_PGN_FOLDER = "pgn_files"
 DEFAULT_PLAYER = "Blackeyes972"

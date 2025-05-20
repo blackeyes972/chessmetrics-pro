@@ -49,7 +49,7 @@ import chess.svg
 from PyQt6.QtCore import QByteArray
 
 # Costanti
-VERSION = "0.3.0-beta"
+VERSION = "1.0"
 DEFAULT_DB_PATH = get_db_path()  # Use our utility function
 DEFAULT_PGN_FOLDER = "pgn_files"
 DEFAULT_PLAYER = "Blackeyes972"
