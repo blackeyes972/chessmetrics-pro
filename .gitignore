@@ -1,16 +1,14 @@
 # File proggetto
-1.py
 chess_analysis.csv
 chess_analysis.txt
 chess_games.db
 chess_import.log
 .directory
-Chess.md
-docs/resoconto.md
 pgn_files/
 gif_files/
 analysis/
 export/
+_local/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
